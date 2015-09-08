@@ -1,0 +1,319 @@
+' ========================================================================================
+' X, Y, and Z Zero'ing tool for PS1's Shopbot (www.pumpingstationone.org)
+'
+' Written by Ron Olson (tachoknight@gmail.com) based on Shopbot's Zzero.sbp program and
+' Barry Rimmer's xyz-zero program
+' 
+'
+' This program is in the public domain. Use it any way you like, enjoy.
+'
+'
+' 								W A R N I N G ! ! !
+' THIS PROGRAM WAS WRITTEN TO WORK WITH THE XYZ ZERO PLATE AND THIS IS PROGRAMMED WITH
+' CERTAIN EXPECTATIONS OF HEIGHT, THICKNESS, ETC. DO *NOT* USE THIS PROGRAM FOR ANY OTHER
+' XYZ FINDER UNLESS YOU'VE PROPERLY MODIFIED THE CODE TO DO SO.
+' YOU TAKE FULL RESPONSIBILITY NOT TO HURT YOURSELF, OTHERS, OR THE TOOL WHEN RUNNING
+' THIS PROGRAM.
+' ========================================================================================
+
+
+' Give the user a chance to exit the program if they didn't intend to run it,
+' or they're not ready to (e.g. the tool isn't positioned above the plate)
+MSGBOX(Is the tool positioned above the upper part of the plate? YesNo, Ready to Zero?)
+IF &msganswer = "No" THEN GOTO EndOfProgram
+
+' We want to make sure the bit is not spinning when running this program...
+' Make sure the spindle RPMs are set to zero
+TR,0
+' And turn off the spindle
+C7
+
+
+' ****************************************************************************************
+' Initialization of variables
+' (Because it's nice to know what all the variables are ahead of time)
+' ****************************************************************************************
+
+' Used in calculating where Z should be
+&zBottom = 0
+
+' The thickness of the aluminum plate
+&PLATE_THICKNESS = .5 
+
+' The size of the top part of the plate where Z is found (and then we move off from there)
+' heading towards absolute X 0 (i.e. the front of the shopbot as it's positioned at PS1)
+&TOP_PLATE_LENGTH = -3.5
+
+' ****************************************************************************************
+' First we need to figure out if we're in preview mode, or in tool
+' mode. The program does nothing useful in preview mode
+' ****************************************************************************************
+
+&currentMode = %(22)
+IF &currentMode = 1 THEN GOSUB InPreviewMode
+
+' ****************************************************************************************
+' Okay, we're not in preview mode, so on with the show...
+' ****************************************************************************************
+
+' Load the custom variables file from Custom Cut 90
+C#,90
+
+' Set the scale we'll use
+&SCALE = 1
+
+'Get Speed Limits of the machine
+IF %(25) = 0 THEN GOSUB GetInchSpeedLimits
+
+' TEMPORARY: Haven't figured out the metric values yet
+IF %(25) = 1 THEN GOSUB MetricNotYet
+
+' Okay, now we have to get the current settings 
+&start_XYmove_Speed = %(71)
+&start_XYjog_Speed = %(76)
+&start_Zmove_Speed = %(73)
+
+'set up X and Y speeds
+&XYapproach_Speed = &start_XYmove_Speed
+&XYtempJog_Speed = &start_XYjog_Speed
+If &XYapproach_Speed > &TopApproachSpeed then &XYapproach_Speed = &TopApproachSpeed
+If &XYtempJog_Speed > &TopJogSpeed then &XYtempJog_Speed = &TopJogSpeed
+
+' Now actually set the speed of the machine
+VS, &XYapproach_Speed,,,,&XYtempJog_Speed  '... and assign slower speeds
+
+'set up Z
+&new_Zmove_Speed = .25
+IF %(25) = 1 THEN &new_Zmove_Speed = 6
+&zup = (&my_XYzeroSafeZ * &SCALE)
+
+'Set thickness and pull-up distance
+&zBottom = &PLATE_THICKNESS * &SCALE
+&zup = &my_ZzeroSafeZ * &SCALE
+
+'Save start X and Y positions for use with centering
+&start_X_pos = %(1)
+&start_Y_pos = %(2)
+
+'Set paramaters
+SA     	'Set tool to Absolute mode
+
+'Limits are deactivated here, automatically reset to original state when file ends 
+VN, 0                    'Deactivate the limit switch functionality on input #3
+SF, 0                    'Deactivate software limits
+
+' ****************************************************************************************
+' Okay, here we go....
+' ****************************************************************************************																						  
+
+' ----------------------------------------------------------------------------------------
+' Z - A X I S  Z E R O I N G 
+'
+' Note that we're zeroing to the top of the plate, which we'll use as the basis for the
+' calculations that will *really* set Z-zero.
+' ----------------------------------------------------------------------------------------
+
+GOSUB TEST_CLEAR 'Check for clear           
+	         
+'Set-up the contact switch action ... 
+ON INP(&my_ZzeroInput,1) GOSUB Zcontact 'this is where we'll go on contact with plate
+
+VS, , &new_Zmove_Speed
+&little_plunge = %(3) - 2
+IF %(25) = 1 THEN &little_plunge = %(3) - 50.8
+MZ, &little_plunge         'Start continuous plunge ... looking for  contact to occur
+
+&save_Z_dist = %(3)
+'msgbox (z pos is now &save_Z_dist, 48, Debugging)
+
+' ----------------------------------------------------------------------------------------
+' X - A X I S  Z E R O I N G 
+'
+' Note that, similar to Z-Axis zeroing above, we are not actually setting the zero here,
+' but finding the X-edge of the plate, which we'll use for calculation
+' ----------------------------------------------------------------------------------------
+
+'Set tool to Relative Mode because we want to move around based on where we currently are
+SR
+
+GOSUB TEST_CLEAR 'Check for clear           
+
+' First we want to move off a bit in the positive X to clear the plate...
+MX, &TOP_PLATE_LENGTH
+
+' And now we want to go to the Z location and a little lower
+&ZLocationForXTest = &zBottom - &zup - .40
+MZ, &ZLocationForXTest
+
+'First set the contact switch action ... 
+ON INP(&my_ZzeroInput,1) GOSUB Xcontact   'this is where we'll go on contact with plate
+' Set our X position to where we currently are for the second pass
+&start_X_pos = %(1)
+' Then we start moving in the positive X ( the * -1 for that)
+MX, &TOP_PLATE_LENGTH * -1
+
+' ... we return here after handling X homing
+
+' ----------------------------------------------------------------------------------------
+' Y - A X I S  Z E R O I N G 
+'
+' Note that, similar to Z-Axis zeroing above, we are not actually setting the zero here,
+' but finding the Y-edge of the plate, which we'll use for calculation
+' ----------------------------------------------------------------------------------------
+
+SR
+
+' Okay, as of right now we're sitting on the left edge of the plate somewhere. First
+' we want to back off by an inch...
+MX, -1
+
+' Now we want to move in -Y the length of the plate
+MY, &TOP_PLATE_LENGTH
+
+' Now put us inside the plate in the X axis
+MX, 2.5
+
+GOSUB TEST_CLEAR 'Check for clear 
+          
+'First set the contact switch action ... 
+ON INP(&my_ZzeroInput,1) GOSUB Ycontact   'this is where we'll go on contact with plate
+'Then start the move in Y 
+MY, &TOP_PLATE_LENGTH * -1
+
+
+' ****************************************************************************************
+' Okay, we have the X, Y, and Z values as they currently stand; let's move to what
+' we think 0,0,0 should be
+' ****************************************************************************************
+
+' We're still touching the plate in Y, so let's move back .25
+MY, -.25
+PAUSE 1
+' Next move Z up to a safe spot
+MZ, 2
+PAUSE 1
+
+' And put us back in absolute mode
+SA
+
+' Now let's move to the right Y
+
+' Where are we?
+&NowY = %(2)
+' Now move back to the edge plus 1 inch
+MY, &NowY + 1
+PAUSE 1
+' Now move to the X plus one inch
+MX, &save_X_dist + 1
+PAUSE 1
+' And then we move the Z to 0
+MZ, 0
+PAUSE 1
+
+' Now set the X, Y, and Z at this spot and zero it all out
+VA, %(1), %(2), %(3),,,0,0,0          
+PAUSE 1
+
+MSGBOX(All Done. I am now going to move the bit out of the plate. Have a nice day, 48, Finished)
+
+' And lift the tool 2 inches to clear the plate
+MZ, 2
+
+
+' ****************************************************************************************
+' This is the very end of the program
+' ****************************************************************************************
+EndOfProgram:
+END
+
+
+
+' ****************************************************************************************
+' S U B R O U T I N E S   S T A R T   H E R E
+' ****************************************************************************************
+
+'
+' Contact Routines
+'
+Zcontact:
+	'This is our subroutine for action on hitting the plate
+	VA,,, &zBottom ,,,,,0          'Set final Z location and Zero Table Base Coordinate
+	PAUSE 1
+	VS, ,&start_Zmove_Speed
+	JZ, &zup                  'Pull-up to safe height
+RETURN
+
+Xcontact:
+	'This is our subroutine for action on hitting the plate	
+	ON INP(&my_ZzeroInput,1) 'Set switch to nothing to turn off
+	&save_X_dist = %(1)
+	PAUSE 1
+	MX, -1 '&start_X_pos 'Move back out for another pass
+	ON INP(&my_ZzeroInput,1) GOTO Xagain
+	MX, &second_move
+END
+
+Xagain:
+	ON INP(&my_ZzeroInput,1) 'Set switch to nothing to turn off	
+	PAUSE 1
+	'msgbox (save_X_dist is now &save_X_dist, 48, Debugging)
+RETURN                        
+
+
+Ycontact:
+	'This is our subroutine for action on hitting the plate
+	ON INP(&my_ZzeroInput,1) 'Set switch to nothing to turn off
+	&save_Y_dist = %(2)
+	PAUSE 1
+	MY, -1 '&start_X_pos 'Move back out for another pass
+	ON INP(&my_ZzeroInput,1) GOTO Yagain
+	MY, &second_move
+END
+
+Yagain:
+	ON INP(&my_ZzeroInput,1) 'Set switch to nothing to turn off	
+	PAUSE 1
+	'msgbox (save_Y_dist is now &save_Y_dist, 48, Debugging)
+RETURN                        
+
+
+
+' ****************************************************************************************
+' General purpose routines
+' **************************************************************************************** 
+TEST_CLEAR:
+	&cleared = &my_ZzeroInput + 50
+	IF %(&cleared) = 1 THEN PAUSE 3
+	IF %(&cleared) = 1 THEN GOTO NO_CLEAR
+RETURN
+
+NO_CLEAR:
+	'Reset the orginal speeds
+	VS, ,&start_Zmove_Speed
+	VS, &start_XYmove_Speed,,,,&start_XYjog_Speed
+	'Contact did not clear for some reason. Exiting.
+	PAUSE
+END
+
+' Function that sets the speed limits in imperial
+GetInchSpeedLimits:
+	&TopApproachSpeed = .25
+	&TopJogSpeed = 3.5
+	&first_move = -2
+	&second_move = 2
+RETURN
+
+' Function that tells the user the program is not going to work in preview mode
+InPreviewMode:
+	' If we're here, that means we're in preview mode, which is kinda pointless
+	' for this program
+	MSGBOX(You are currently in preview mode which won't work with this program. Check that the ShopBot is switched on., 16, Preview Mode Detected)
+ 	PAUSE 
+END
+
+' Function that exposes to the user the fact that I am bad at metric/imperial conversion
+' math
+MetricNotYet:
+	MSGBOX(Can't do metric just yet. Sorry about that. :(, 48, Metric...oooh...um...hmmm...)
+	PAUSE
+END
