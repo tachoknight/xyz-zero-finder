@@ -19,7 +19,7 @@
 
 ' Give the user a chance to exit the program if they didn't intend to run it,
 ' or they're not ready to (e.g. the tool isn't positioned above the plate)
-MSGBOX(Is the tool positioned above the upper part of the plate? YesNo, Ready to Zero?)
+MSGBOX(Is the tool positioned above the upper part of the plate?, YesNo, Ready to Zero?)
 IF &msganswer = "No" THEN GOTO EndOfProgram
 
 ' We want to make sure the bit is not spinning when running this program...
@@ -43,6 +43,15 @@ C7
 ' The size of the top part of the plate where Z is found (and then we move off from there)
 ' heading towards absolute X 0 (i.e. the front of the shopbot as it's positioned at PS1)
 &TOP_PLATE_LENGTH = -3.5
+
+'
+' A D J U S T M E N T S
+' These two variables are for 'tweaking' the X and Y due to irregularities in the
+' plate. These are very very piece-specific and if you make your own, it's likely
+' you'll end up wanting to use these variables as well.
+' 
+&xAdjustment = 0
+&yAdjustment = 0
 
 ' ****************************************************************************************
 ' First we need to figure out if we're in preview mode, or in tool
@@ -138,8 +147,15 @@ SR
 
 GOSUB TEST_CLEAR 'Check for clear           
 
+' We want to move a long distance, so let's reset the speed
+VS, &start_XYmove_Speed,,,,&start_XYjog_Speed  '... and assign slower speeds
+
 ' First we want to move off a bit in the positive X to clear the plate...
 MX, &TOP_PLATE_LENGTH
+
+' And now go back to being slow
+VS, &XYapproach_Speed,,,,&XYtempJog_Speed  
+
 
 ' And now we want to go to the Z location and a little lower
 &ZLocationForXTest = &zBottom - &zup - .40
@@ -163,6 +179,9 @@ MX, &TOP_PLATE_LENGTH * -1
 
 SR
 
+' We want to move a long distance, so let's reset the speed
+VS, &start_XYmove_Speed,,,,&start_XYjog_Speed  '... and assign slower speeds
+
 ' Okay, as of right now we're sitting on the left edge of the plate somewhere. First
 ' we want to back off by an inch...
 MX, -1
@@ -172,6 +191,9 @@ MY, &TOP_PLATE_LENGTH
 
 ' Now put us inside the plate in the X axis
 MX, 2.5
+
+' And now go back to being slow
+VS, &XYapproach_Speed,,,,&XYtempJog_Speed  
 
 GOSUB TEST_CLEAR 'Check for clear 
           
@@ -200,11 +222,11 @@ SA
 
 ' Where are we?
 &NowY = %(2)
-' Now move back to the edge plus 1 inch
-MY, &NowY + 1
+' Now move back to the edge plus 1 inch (the width of the lower plate)
+MY, &NowY + 1 + &yAdjustment
 PAUSE 1
-' Now move to the X plus one inch
-MX, &save_X_dist + 1
+' Now move to the X plus 1 inch (the width of the lower plate)
+MX, &save_X_dist + 1 + &xAdjustment
 PAUSE 1
 ' And then we move the Z to 0
 MZ, 0
@@ -214,7 +236,7 @@ PAUSE 1
 VA, %(1), %(2), %(3),,,0,0,0          
 PAUSE 1
 
-MSGBOX(All Done. I am now going to move the bit out of the plate. Have a nice day, 48, Finished)
+MSGBOX(All Done. I am now going to move the bit out of the plate. Have a nice day., 48, Finished)
 
 ' And lift the tool 2 inches to clear the plate
 MZ, 2
