@@ -50,8 +50,9 @@ C7
 ' plate. These are very very piece-specific and if you make your own, it's likely
 ' you'll end up wanting to use these variables as well.
 ' 
-&xAdjustment = 0
-&yAdjustment = 0
+&xAdjustment = 0.044
+&yAdjustment = 0.042
+&zAdjustment = 0.030
 
 ' ****************************************************************************************
 ' First we need to figure out if we're in preview mode, or in tool
@@ -133,7 +134,7 @@ IF %(25) = 1 THEN &little_plunge = %(3) - 50.8
 MZ, &little_plunge         'Start continuous plunge ... looking for  contact to occur
 
 &save_Z_dist = %(3)
-'msgbox (z pos is now &save_Z_dist, 48, Debugging)
+
 
 ' ----------------------------------------------------------------------------------------
 ' X - A X I S  Z E R O I N G 
@@ -148,14 +149,14 @@ SR
 GOSUB TEST_CLEAR 'Check for clear           
 
 ' We want to move a long distance, so let's reset the speed
-VS, &start_XYmove_Speed,,,,&start_XYjog_Speed  '... and assign slower speeds
+'VS, &start_XYmove_Speed,,,,&start_XYjog_Speed  '... and assign slower speeds
+MS, &start_XYmove_Speed
 
 ' First we want to move off a bit in the positive X to clear the plate...
 MX, &TOP_PLATE_LENGTH
 
 ' And now go back to being slow
-VS, &XYapproach_Speed,,,,&XYtempJog_Speed  
-
+MS &XYapproach_Speed
 
 ' And now we want to go to the Z location and a little lower
 &ZLocationForXTest = &zBottom - &zup - .40
@@ -180,7 +181,8 @@ MX, &TOP_PLATE_LENGTH * -1
 SR
 
 ' We want to move a long distance, so let's reset the speed
-VS, &start_XYmove_Speed,,,,&start_XYjog_Speed  '... and assign slower speeds
+'VS, &start_XYmove_Speed,,,,&start_XYjog_Speed  '... and assign slower speeds
+MS, &start_XYmove_Speed
 
 ' Okay, as of right now we're sitting on the left edge of the plate somewhere. First
 ' we want to back off by an inch...
@@ -193,7 +195,7 @@ MY, &TOP_PLATE_LENGTH
 MX, 2.5
 
 ' And now go back to being slow
-VS, &XYapproach_Speed,,,,&XYtempJog_Speed  
+MS, &XYapproach_Speed
 
 GOSUB TEST_CLEAR 'Check for clear 
           
@@ -218,6 +220,9 @@ PAUSE 1
 ' And put us back in absolute mode
 SA
 
+' And we need neither dilly nor dally getting there...
+MS, &start_XYmove_Speed
+
 ' Now let's move to the right Y
 
 ' Where are we?
@@ -232,8 +237,8 @@ PAUSE 1
 MZ, 0
 PAUSE 1
 
-' Now set the X, Y, and Z at this spot and zero it all out
-VA, %(1), %(2), %(3),,,0,0,0          
+' Now set the X, Y, and Z at this spot
+VA, %(1), %(2), %(3),,,,,          
 PAUSE 1
 
 MSGBOX(All Done. I am now going to move the bit out of the plate. Have a nice day., 48, Finished)
@@ -259,7 +264,7 @@ END
 '
 Zcontact:
 	'This is our subroutine for action on hitting the plate
-	VA,,, &zBottom ,,,,,0          'Set final Z location and Zero Table Base Coordinate
+	VA,,, &zBottom + &zAdjustment ,,,,,0          'Set final Z location and Zero Table Base Coordinate
 	PAUSE 1
 	VS, ,&start_Zmove_Speed
 	JZ, &zup                  'Pull-up to safe height
