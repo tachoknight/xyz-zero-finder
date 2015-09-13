@@ -51,7 +51,7 @@ C7
 ' you'll end up wanting to use these variables as well.
 ' 
 &xAdjustment = 0.044
-&yAdjustment = 0.042
+&yAdjustment = 0.072
 &zAdjustment = 0.030
 
 ' ****************************************************************************************
