@@ -2,6 +2,8 @@
 
 Repository for code and designs for an X, Y, and Z axis zero-finder for a ShopBot CNC machine
 
+See https://youtu.be/f4mFNMzBV2k for a demonstration of the plate and software.
+
 ## Use
 To use this tool, position the plate on the lower-left corner of the material you are zeroing. Install the tool into the machine and attach the grounding clamp as if you were going to run Shopbot's `Zzero.sbp` program. Place the Shopbot-provided Z-plate next to the work and attach the cable with the aligator clip to it. Plug the other side of the cable (the one with the audio jack) into the hole in the upper-right corner of the plate. 
 
