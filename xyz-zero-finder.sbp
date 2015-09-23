@@ -238,7 +238,7 @@ MZ, 0
 PAUSE 1
 
 ' Now set the X, Y, and Z at this spot
-VA, %(1), %(2), %(3),,,,,          
+VA, 0, 0, %(3),,,,,,,          
 PAUSE 1
 
 MSGBOX(All Done. I am now going to move the bit out of the plate. Have a nice day., 48, Finished)
