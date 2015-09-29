@@ -1,4 +1,10 @@
-
+/* OpenSCAD design of XYZ Plate for Pumping Station:One's
+ * (www.pumpingstationone.org) ShopBot. You are free to
+ * use this file any way you like.
+ *
+ * Written by Ron Olson (tachoknight@gmail.com)
+ * September 28, 2015
+ */
 
 /* This is the top section of the plate with the hole */
 difference() {
@@ -31,9 +37,3 @@ difference() {
             /* Have to resort to the $f variables for a nicer hole */
             cylinder(15,$fn = 0, $fa = .03, $fs = .03, h = 10, r1 = .75, r2 = .75, center = true);
 }
-
-/*
-translate([-10,15,2.5])
-    rotate([-90,0,0]) 
-        cylinder(15,1,1,true);
-*/
