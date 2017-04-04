@@ -169,6 +169,24 @@ ON INP(&my_ZzeroInput,1) GOSUB Xcontact   'this is where we'll go on contact wit
 ' Then we start moving in the positive X ( the * -1 for that)
 MX, &TOP_PLATE_LENGTH * -1
 
+'
+' Now we want to measure the other side of the plate, so we can use that to determine
+' the bit diameter...
+'
+
+SR
+
+' Reset the speed
+MS, &start_XYmove_Speed
+' Back off an inch in X
+MX, -1
+' Now move up in Z to a safe spot to clear the plate
+MZ, 2
+
+
+
+
+
 ' ... we return here after handling X homing
 
 ' ----------------------------------------------------------------------------------------
@@ -245,7 +263,6 @@ MSGBOX(All Done. I am now going to move the bit out of the plate. Have a nice da
 
 ' And lift the tool 2 inches to clear the plate
 MZ, 2
-
 
 ' ****************************************************************************************
 ' This is the very end of the program
