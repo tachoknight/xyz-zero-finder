@@ -2,6 +2,13 @@
 
 ![XYZ Plate Image](https://github.com/tachoknight/xyz-zero-finder/blob/master/xyz-plate.png)
 
+![XYZ Plate Render](https://github.com/tachoknight/xyz-zero-finder/blob/master/SEF-2.png)
+
+![XYZ Plate Render](https://github.com/tachoknight/xyz-zero-finder/blob/master/SEF.png)
+
+![XYZ Plate Render](https://github.com/tachoknight/xyz-zero-finder/blob/master/SEF-Back.png)
+
+
 Repository for code and designs for an X, Y, and Z axis zero-finder for a ShopBot CNC machine
 
 See https://youtu.be/f4mFNMzBV2k for a demonstration of the plate and software.
