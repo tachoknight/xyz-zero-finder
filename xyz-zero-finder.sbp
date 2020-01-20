@@ -366,8 +366,8 @@ Zcontact:
     ' VA - Values for Axis Locations
 	VA, ,, &zBottom + &zAdjustment ,,,,,0          'Set final Z location and Zero Table Base Coordinate
 	PAUSE 1
-	VS, ,&start_Zmove_Speed     ' XYZZY - is it grinding here?
-	JZ, &zup                  'Pull-up to safe height
+	VS, ,&start_Zmove_Speed   ' Slow it down a bit  
+	JZ, &zup                  ' Pull-up to safe height
 RETURN
 
 ' ----------------------------------------------------------------------------------------
