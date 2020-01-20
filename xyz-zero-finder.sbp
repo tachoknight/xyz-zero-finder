@@ -270,10 +270,6 @@ MX, &TOP_PLATE_LENGTH
 ' Note that, similar to Z-Axis zeroing above, we are not actually setting the zero here,
 ' but finding the Y-edge of the plate, which we'll use for calculation
 ' 
-' Is the plate squared against the machine? Dunno, don't care. What we're going to do is
-' measure the near left, middle, and right sides of the Y side and do the calculation to
-' determine the skew of the plate, and take that skew into consideration for the functionality
-' calculation. Thanks to Jeff Campell for the inspiration
 ' ----------------------------------------------------------------------------------------
 
 SR
